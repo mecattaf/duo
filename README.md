@@ -26,8 +26,14 @@ To rebase an existing atomic Fedora installation to the latest build:
 ### Manual Steps
 
 - Copy over git credentials
+```
+git config --global user.name "Thomas Mecattaf"
+git config --global user.email "thomas@mecattaf.dev"
+```
 - Authenticate to google chrome and [follow instructions](docs/chrome.md)
 - Authenticate to gh from the CLI
+- Set icon and gtk theme with GTK Settings
+- Authenticate to google drive and sync music library using Celeste
 
 
 ## Installation (ISO) [Recommended]

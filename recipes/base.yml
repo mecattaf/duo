@@ -7,6 +7,7 @@ install:
     - firewall-config
     - gnome-disk-utility
     - gnome-keyring
+    - gnuplot
     - imv
     - kitty
     - kitty-terminfo
