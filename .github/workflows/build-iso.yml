@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         image_name: [duo]
-        major_version: [41]  
+        major_version: [42]  
         image_tag: [latest]
 
     steps:
@@ -55,12 +55,11 @@ jobs:
           image_repo: ${{ env.IMAGE_REGISTRY }}
           image_name: ${{ matrix.image_name }}
           image_tag: ${{ matrix.image_tag }}
-          variant: 'Silverblue'
+          variant: 'Sericea'
           iso_name: ${{ matrix.image_name }}_${{ env.TIMESTAMP }}.iso
           enable_cache_dnf: "false"
           enable_cache_skopeo: "false"
           enable_flatpak_dependencies: "false"
-          additional_templates: "kickstart/anaconda_defaults.tmpl"
 
       - name: Move ISO to Upload Directory
         id: upload-directory
