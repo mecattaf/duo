@@ -5,6 +5,7 @@ repos:
 install:
   packages:
     - atuin
+    - backlog
     - bibata-cursor-themes
     - cliphist
     - eza
