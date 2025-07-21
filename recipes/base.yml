@@ -142,3 +142,17 @@ install:
     - openvino
     - ollama
     - ramalama
+    # added from ax-shell instructions
+    - tesseract
+    - webp-pixbuf-loader 
+    - python3-gobject 
+    - python3-numpy 
+    - python3-pillow 
+    - python3-psutil 
+    - python3-requests 
+    - python3-toml 
+    - python3-watchdog 
+    - python3-pywayland 
+    - python3-ijson 
+    - python3-setproctitle
+
