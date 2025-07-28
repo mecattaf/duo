@@ -52,21 +52,23 @@ modules:
     disable-update: false
 
   - type: default-flatpaks
-    notify: true 
-    user:
-      repo-url: https://dl.flathub.org/repo/flathub.flatpakrepo
-      repo-name: flathub
-      install:
-        - com.google.Chrome
-        - it.mijorus.gearlever
-        - org.desmume.DeSmuME
-        - io.mgba.mGBA
-        - com.hunterwittenborn.Celeste
-        - it.mijorus.collector
-        - com.obsproject.Studio
-        - com.obsproject.Studio.Plugin.OBSVkCapture
-        - io.bassi.Amberol
-        # - org.freedesktop.Platform.VulkanLayer.OBSVkCapture
-        # - org.freedesktop.Platform.GStreamer.gstreamer-vaapi
+    configurations:
+      - notify: true
+        scope: user
+        repo:
+          url: https://dl.flathub.org/repo/flathub.flatpakrepo
+          name: flathub
+        install:
+          - com.google.Chrome
+          - it.mijorus.gearlever
+          - org.desmume.DeSmuME
+          - io.mgba.mGBA
+          - com.hunterwittenborn.Celeste
+          - it.mijorus.collector
+          - com.obsproject.Studio
+          - com.obsproject.Studio.Plugin.OBSVkCapture
+          - io.bassi.Amberol
+          # - org.freedesktop.Platform.VulkanLayer.OBSVkCapture
+          # - org.freedesktop.Platform.GStreamer.gstreamer-vaapi
 
   - type: signing
