@@ -155,4 +155,6 @@ install:
     - python3-pywayland 
     - python3-ijson 
     - python3-setproctitle
+    # for experiments using zenbook as monitor
+    - cage
 
