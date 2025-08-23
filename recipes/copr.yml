@@ -16,4 +16,3 @@ install:
     - scroll
     - starship
     - wl-gammarelay-rs
-    - wlvncc
