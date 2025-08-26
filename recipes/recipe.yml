@@ -51,6 +51,10 @@ modules:
     disable-init: false
     disable-update: false
 
+  - type: brew
+    nofile-limits: true  # default: false
+    brew-analytics: false # default: true
+
   - type: default-flatpaks
     configurations:
       - notify: true
