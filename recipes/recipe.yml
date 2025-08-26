@@ -72,7 +72,8 @@ modules:
           - it.mijorus.collector
           - com.obsproject.Studio
           - com.obsproject.Studio.Plugin.OBSVkCapture
-          - io.bassi.Amberol
+          - org.gnome.Lollypop
+          - org.mozilla.firefox
           # - org.freedesktop.Platform.VulkanLayer.OBSVkCapture
           # - org.freedesktop.Platform.GStreamer.gstreamer-vaapi
 
