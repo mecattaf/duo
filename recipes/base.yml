@@ -137,7 +137,6 @@ install:
     - wtype
     - xorg-x11-server-Xwayland
     # Local AI functionality
-    - openvino
     - ollama
     - ramalama
     # added from ax-shell instructions
@@ -153,6 +152,5 @@ install:
     - python3-pywayland 
     - python3-ijson 
     - python3-setproctitle
-    # for experiments using zenbook as monitor
-    - cage
-
+    # tailscale
+    - tailscale

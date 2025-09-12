@@ -12,6 +12,7 @@ install:
     - lisgd
     - nwg-clipman
     - nwg-look
+    - quickshell
     - scroll
     - starship
     - uwsm
