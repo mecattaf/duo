@@ -152,11 +152,10 @@ install:
     - python3-setproctitle
     # tailscale
     - tailscale
-
 replace:
   - from-repo: updates-archive
     packages:
-      - kernel-6.14.0
-      - kernel-modules-6.14.0
-      - kernel-modules-extra-6.14.0
-      - kernel-tools-6.14.0
+      - kernel-6.14.0-63.fc42.x86_64
+      - kernel-modules-6.14.0-63.fc42.x86_64
+      - kernel-modules-extra-6.14.0-63.fc42.x86_64
+      - kernel-tools-6.14.0-63.fc42.x86_64
