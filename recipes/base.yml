@@ -53,6 +53,8 @@ install:
     - mesa-vulkan-drivers
     - vulkan-tools
     - vulkan-validation-layers
+    - intel-media-driver
+    - libva-intel-driver
     # Media Hardware
     - alsa-sof-firmware
     - bluez
