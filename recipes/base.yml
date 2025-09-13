@@ -1,7 +1,4 @@
 type: dnf
-repos:
-  files:
-    - https://archives.fedoraproject.org/pub/archive/fedora/linux/updates/42/36/x86_64/
 install:
   packages:
     # Desktop Apps
@@ -158,7 +155,7 @@ install:
 replace:
   - from-repo: updates-archive
     packages:
-      - kernel-6.14.0-63.fc42.x86_64
-      - kernel-modules-6.14.0-63.fc42.x86_64
-      - kernel-modules-extra-6.14.0-63.fc42.x86_64
-      - kernel-tools-6.14.0-63.fc42.x86_64
+      - kernel-6.14.6
+      - kernel-modules-6.14.6
+      - kernel-modules-extra-6.14.6
+      - kernel-tools-6.14.6
