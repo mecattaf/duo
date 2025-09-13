@@ -47,10 +47,7 @@ install:
     - overpass-fonts
     - overpass-mono-fonts
     # Intel Support
-    - clinfo
-    - hwinfo
-    - intel-opencl
-    - libmfx
+    - linux-firmware
     - mesa-dri-drivers
     - mesa-libGLU
     - mesa-vulkan-drivers
