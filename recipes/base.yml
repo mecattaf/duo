@@ -53,8 +53,6 @@ install:
     - mesa-vulkan-drivers
     - vulkan-tools
     - vulkan-validation-layers
-    - intel-media-driver
-    - libva-intel-driver
     # Media Hardware
     - alsa-sof-firmware
     - bluez
@@ -154,3 +152,11 @@ install:
     - python3-setproctitle
     # tailscale
     - tailscale
+
+replace:
+  - from-repo: updates-archive
+    packages:
+      - kernel-6.14.0
+      - kernel-modules-6.14.0
+      - kernel-modules-extra-6.14.0
+      - kernel-tools-6.14.0
