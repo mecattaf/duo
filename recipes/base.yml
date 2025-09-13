@@ -1,4 +1,7 @@
 type: dnf
+repos:
+  files:
+    - https://archives.fedoraproject.org/pub/archive/fedora/linux/updates/42/36/x86_64/
 install:
   packages:
     # Desktop Apps
