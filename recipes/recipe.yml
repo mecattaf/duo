@@ -8,6 +8,7 @@ image-version: 42
 modules:
   - from-file: base.yml
   - from-file: copr.yml
+  - from-file: quickshell.yml
 
   - type: dnf
     remove:

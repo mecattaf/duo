@@ -13,6 +13,7 @@ install:
     - kitty-terminfo
     - mate-polkit
     - network-manager-applet
+    - pass
     - pavucontrol
     - remmina
     - swappy
