@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=UWSM
+Comment=UWSM-managed session with robust podman quadlets autostarting
+Exec=/usr/etc/uwsm/uwsmrun
+Type=Application
+DesktopNames=uwsm
