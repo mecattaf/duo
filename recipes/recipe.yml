@@ -38,8 +38,7 @@ modules:
   - type: systemd
     system:
       enabled:
-        - getty@tty1.service
-        #- sddm-boot.service
+        - sddm-boot.service
       disabled: []
 
   - type: script
