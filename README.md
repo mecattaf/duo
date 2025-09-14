@@ -34,6 +34,11 @@ git config --global user.email "thomas@mecattaf.dev"
 - Authenticate to gh from the CLI
 - Set icon and gtk theme with GTK Settings
 - Authenticate to google drive and sync music library using Celeste
+- If flatpaks are not loaded automatically: ``
+```
+bluebuild-flatpak-manager apply all
+```
+
 
 
 ## Installation (ISO) [Recommended]
