@@ -53,6 +53,9 @@ install:
     - mesa-vulkan-drivers
     - vulkan-tools
     - vulkan-validation-layers
+    # Login Manager
+    - sddm
+    - sddm-themes
     # Media Hardware
     - alsa-sof-firmware
     - bluez
