@@ -155,6 +155,10 @@ install:
     - python3-setproctitle
     # tailscale
     - tailscale
+remove:
+  packages:
+    - sway
+
 replace:
   - from-repo: updates-archive
     packages:
