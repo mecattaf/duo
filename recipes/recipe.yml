@@ -39,6 +39,7 @@ modules:
     system:
       enabled:
         - sddm-boot.service
+        - tailscaled.service
       disabled: []
 
   - type: script
