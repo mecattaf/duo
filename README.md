@@ -2,6 +2,45 @@
 
 See the [BlueBuild docs](https://blue-build.org/how-to/setup/). 
 
+## Installation (ISO) [Recommended]
+
+> [!CAUTION]
+> This ISO installation guide assumes that you want to install Zen Linux on single-boot single-disk setup.
+
+### [DOWNLOAD LINK](https://github.com/mecattaf/duo/actions/workflows/build-iso.yml)
+Click on the most recent successful build, then download the ISO artifact.  
+ISOs are named in DD-MM-YYYY date format for easy identification.
+
+- Download and extract the ISO artifact from GitHub Actions
+- ISO doesn't require an active internet connection during its usage (but it is recommended to have it for NTP functionality)
+- Boot from the ISO and proceed with installation
+- When ISO is booted, complete the following mandatory configuration:
+  - **Network & Host Name**: Configure your WiFi connection if needed
+  - **Installation Destination**: Select target disk, choose "Storage Configuration" → Automatic, then "Free up space by removing or shrinking existing partitions"
+    - When "Reclaim disk space" screen appears, click "Delete all" and "Reclaim space"
+  - **User Creation**: Input your full name, username, and password. Click Done.
+  - **Root Password**: Set a root password for system administration (recommended for Sway environments)
+- Optionally configure "Keyboard", "Language Support", "Time & Date", etc.
+- Click "Begin Installation"
+- After installation completes, reboot and enjoy your new Zen Linux system
+
+### Manual Steps
+
+- Sign in to github wih `gh auth login`
+- Copy over git credentials
+```
+git config --global user.name "Thomas Mecattaf"
+git config --global user.email "thomas@mecattaf.dev"
+```
+- Authenticate to google chrome and [follow instructions](docs/chrome.md)
+- Authenticate to gh from the CLI
+- Set icon and gtk theme with GTK Settings
+- If flatpaks are not loaded automatically: ``
+```
+mako #to have a notification daemon running
+bluebuild-flatpak-manager apply all
+```
+
 ## Installation (Rebase)
 
 To rebase an existing atomic Fedora installation to the latest build:
@@ -23,61 +62,6 @@ To rebase an existing atomic Fedora installation to the latest build:
   systemctl reboot
   ```
 
-### Manual Steps
-
-- Copy over git credentials
-```
-git config --global user.name "Thomas Mecattaf"
-git config --global user.email "thomas@mecattaf.dev"
-```
-- Authenticate to google chrome and [follow instructions](docs/chrome.md)
-- Authenticate to gh from the CLI
-- Set icon and gtk theme with GTK Settings
-- Authenticate to google drive and sync music library using Celeste
-- If flatpaks are not loaded automatically: ``
-```
-bluebuild-flatpak-manager apply all
-```
-
-
-
-## Installation (ISO) [Recommended]
-
-> [!IMPORTANT]  
-> Backup your important data before proceeding with the installation.
-
-> [!CAUTION]
-> This ISO installation guide assumes that you want to install Zen Linux on single-boot single-disk setup.
-
-> [!CAUTION]
-> broken as of f42
-
-### [DOWNLOAD LINK](https://github.com/mecattaf/duo/actions/workflows/build-iso.yml)
-Click on the most recent successful build, then download the ISO artifact.  
-ISOs are named in DD-MM-YYYY date format for easy identification.
-
-- Download and extract the ISO artifact from GitHub Actions
-- ISO doesn't require an active internet connection during its usage (but it is recommended to have it for NTP functionality)
-- Boot from the ISO and proceed with installation
-- When ISO is booted, complete the following mandatory configuration:
-  - **Network & Host Name**: Configure your WiFi connection if needed
-  - **Installation Destination**: Select target disk, choose "Storage Configuration" → Automatic, then "Free up space by removing or shrinking existing partitions"
-    - When "Reclaim disk space" screen appears, click "Delete all" and "Reclaim space"
-  - **User Creation**: Input your full name, username, and password. Click Done.
-  - **Root Password**: Set a root password for system administration (recommended for Sway environments)
-- Optionally configure "Keyboard", "Language Support", "Time & Date", etc.
-- Click "Begin Installation"
-- After installation completes, reboot and enjoy your new Zen Linux system
-
-### Post-Installation Notes
-
-After first boot, your Sway environment will be ready to use with all configured dotfiles and packages. The system will automatically apply your chezmoi configuration, so your personalized environment should be available within a few minutes of first login.
-
----
-- We also make sure to add python packages install through uv, add to justfile:
-```
-uv tool install --force --python python3.12 aider-chat@latest
-```
 
 ### Troubleshooting flatpaks
 
