@@ -1,17 +1,19 @@
-name: Build ISO
+name: Build and Release Duo ISO
 
 on:
   schedule:
-    - cron: "0 0 1 * *" # Build & upload ISO every month
-
+    - cron: "0 0 1 * *" # Monthly on the 1st at midnight UTC
   workflow_dispatch:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/build-iso.yml'
+    inputs:
+      create_release:
+        description: 'Create a GitHub release'
+        required: false
+        default: true
+        type: boolean
 
 env:
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+  IMAGE_NAME: duo
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -19,64 +21,304 @@ concurrency:
 
 jobs:
   build-iso:
+    name: Build Duo ISO
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      packages: read
       id-token: write
-    strategy:
-      fail-fast: false
-      matrix:
-        image_name: [duo]
-        major_version: [42]  
-        image_tag: [latest]
-
+    outputs:
+      iso_name: ${{ steps.build.outputs.iso_name }}
+      iso_path: ${{ steps.build.outputs.iso_path }}
+      checksum_name: ${{ steps.build.outputs.checksum_name }}
+      
     steps:
-      - name: Set timezone to UTC
-        uses: MathRobin/timezone-action@v1.1
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@v1.3.1
         with:
-          timezoneLinux: 'UTC'
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: true
 
-      - name: Fetch current date
-        shell: bash
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for changelog generation
+          
+      - name: Set Build Date
+        id: date
         run: |
-          TIMESTAMP="$(date +%d-%m-%Y)"
+          TIMESTAMP="$(date +%Y%m%d)"
           echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
-
-      - name: Checkout Repo
-        uses: actions/checkout@v5
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
+          
+          # Generate version tag
+          VERSION_TAG="v${TIMESTAMP}"
+          echo "VERSION_TAG=${VERSION_TAG}" >> $GITHUB_ENV
+          echo "version_tag=${VERSION_TAG}" >> $GITHUB_OUTPUT
 
       - name: Build ISO
         uses: jasonn3/build-container-installer@v1.3.0
         id: build
         with:
           arch: x86_64
-          version: ${{ matrix.major_version }}
+          version: 42
           image_repo: ${{ env.IMAGE_REGISTRY }}
-          image_name: ${{ matrix.image_name }}
-          image_tag: ${{ matrix.image_tag }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: latest
           variant: 'Sericea'
-          iso_name: ${{ matrix.image_name }}_${{ env.TIMESTAMP }}.iso
+          iso_name: ${{ env.IMAGE_NAME }}-${{ env.TIMESTAMP }}.iso
+          # Disable features we don't need
           enable_cache_dnf: "false"
           enable_cache_skopeo: "false"
           enable_flatpak_dependencies: "false"
 
-      - name: Move ISO to Upload Directory
-        id: upload-directory
-        shell: bash
+      - name: Generate Checksums
+        id: checksums
         run: |
-          ISO_UPLOAD_DIR=${{ github.workspace }}/upload
-          mkdir ${ISO_UPLOAD_DIR}
-          mv ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }} ${ISO_UPLOAD_DIR}
-          mv ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}-CHECKSUM ${ISO_UPLOAD_DIR}
-          echo "iso-upload-dir=${ISO_UPLOAD_DIR}" >> $GITHUB_OUTPUT     
+          # Move to build directory
+          cd ${{ steps.build.outputs.iso_path }}
+          
+          # Generate SHA256 checksum
+          ISO_FILE="${{ steps.build.outputs.iso_name }}"
+          CHECKSUM_FILE="${ISO_FILE}.sha256"
+          
+          sha256sum "${ISO_FILE}" > "${CHECKSUM_FILE}"
+          
+          # Also create a more detailed checksum file
+          cat > "${ISO_FILE}-CHECKSUM" <<EOF
+          # ${{ env.IMAGE_NAME }} ISO Build
+          # Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          # Version: ${{ env.VERSION_TAG }}
+          # Registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          $(sha256sum "${ISO_FILE}")
+          EOF
+          
+          echo "checksum_file=${CHECKSUM_FILE}" >> $GITHUB_OUTPUT
+          echo "detailed_checksum=${ISO_FILE}-CHECKSUM" >> $GITHUB_OUTPUT
 
-      - name: Upload ISO and Checksum to Job Artifacts
+      - name: Prepare Upload Directory
+        id: prepare
+        run: |
+          UPLOAD_DIR="${{ github.workspace }}/upload"
+          mkdir -p "${UPLOAD_DIR}"
+          
+          # Move ISO and checksums
+          mv "${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}" "${UPLOAD_DIR}/"
+          mv "${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}-CHECKSUM" "${UPLOAD_DIR}/"
+          mv "${{ steps.build.outputs.iso_path }}/${{ steps.checksums.outputs.checksum_file }}" "${UPLOAD_DIR}/"
+          
+          echo "upload_dir=${UPLOAD_DIR}" >> $GITHUB_OUTPUT
+          
+          # List files for verification
+          echo "Files to upload:"
+          ls -lah "${UPLOAD_DIR}"
+
+      - name: Upload ISO Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.image_name }}_${{ env.TIMESTAMP }}_ISO
-          path: ${{ steps.upload-directory.outputs.iso-upload-dir }}
+          name: duo-iso-${{ env.TIMESTAMP }}
+          path: ${{ steps.prepare.outputs.upload_dir }}
           if-no-files-found: error
+          retention-days: 30  # Keep for 30 days instead of 90
+          compression-level: 0  # ISOs are already compressed
+
+      - name: Upload Build Metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-metadata-${{ env.TIMESTAMP }}
+          path: |
+            ${{ steps.prepare.outputs.upload_dir }}/*.sha256
+            ${{ steps.prepare.outputs.upload_dir }}/*-CHECKSUM
           retention-days: 90
-          compression-level: 0
-          overwrite: true
+
+  generate-changelog:
+    name: Generate Changelog
+    needs: [build-iso]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changelog_file: ${{ steps.changelog.outputs.file }}
+      release_title: ${{ steps.changelog.outputs.title }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog
+          fetch-tags: true
+
+      - name: Get Previous Tag
+        id: prev_tag
+        run: |
+          # Get the most recent tag
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, using initial commit"
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "previous_tag=${PREV_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Generate Changelog
+        id: changelog
+        env:
+          PREV_TAG: ${{ steps.prev_tag.outputs.previous_tag }}
+        run: |
+          # Create changelog file
+          CHANGELOG_FILE="CHANGELOG-${{ needs.build-iso.outputs.timestamp }}.md"
+          
+          cat > "${CHANGELOG_FILE}" << 'EOF'
+          # Duo Linux ISO Release - ${{ needs.build-iso.outputs.version_tag }}
+          
+          **Release Date:** $(date -u +"%Y-%m-%d")
+          **Base Image:** Fedora Sericea 42
+          **Container:** `${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest`
+          
+          ## 📦 Downloads
+          
+          - **ISO:** `${{ env.IMAGE_NAME }}-${{ needs.build-iso.outputs.timestamp }}.iso`
+          - **SHA256 Checksum:** Available in release assets
+          
+          ## 🚀 What's New
+          
+          EOF
+          
+          # Add commit history since last tag
+          echo "### Commits since ${{ steps.prev_tag.outputs.previous_tag }}" >> "${CHANGELOG_FILE}"
+          echo "" >> "${CHANGELOG_FILE}"
+          
+          git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h) by @%an" >> "${CHANGELOG_FILE}" || \
+            echo "- Initial release" >> "${CHANGELOG_FILE}"
+          
+          echo "" >> "${CHANGELOG_FILE}"
+          echo "## 📋 Installation" >> "${CHANGELOG_FILE}"
+          echo "" >> "${CHANGELOG_FILE}"
+          cat >> "${CHANGELOG_FILE}" << 'EOF'
+          
+          ### From ISO
+          1. Download the ISO and checksum files
+          2. Verify the checksum: `sha256sum -c duo-*.sha256`
+          3. Write to USB: `dd if=duo-*.iso of=/dev/sdX bs=4M status=progress`
+          4. Boot from USB and install
+          
+          ### Rebase Existing System
+          ```bash
+          # First rebase to unsigned image
+          sudo rpm-ostree rebase ostree-unverified-registry:${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          systemctl reboot
+          
+          # Then rebase to signed image
+          sudo rpm-ostree rebase ostree-image-signed:docker://${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          systemctl reboot
+          ```
+          
+          ## 📚 Documentation
+          
+          For more information, see the [README](https://github.com/${{ github.repository }})
+          
+          ---
+          *Automated build from commit ${{ github.sha }}*
+          EOF
+          
+          echo "file=${CHANGELOG_FILE}" >> $GITHUB_OUTPUT
+          echo "title=Duo Linux ISO - ${{ needs.build-iso.outputs.version_tag }}" >> $GITHUB_OUTPUT
+
+      - name: Upload Changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-${{ needs.build-iso.outputs.timestamp }}
+          path: ${{ steps.changelog.outputs.file }}
+          retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+    needs: [build-iso, generate-changelog]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Download ISO Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: duo-iso-${{ needs.build-iso.outputs.timestamp }}
+          path: ./release-assets
+
+      - name: Download Changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog-${{ needs.build-iso.outputs.timestamp }}
+          path: ./
+
+      - name: List Release Assets
+        run: |
+          echo "Release assets:"
+          ls -lah ./release-assets/
+          echo "Changelog:"
+          ls -lah ./*.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-iso.outputs.version_tag }}
+          name: ${{ needs.generate-changelog.outputs.release_title }}
+          body_path: ./CHANGELOG-${{ needs.build-iso.outputs.timestamp }}.md
+          draft: false
+          prerelease: false
+          make_latest: true
+          files: |
+            ./release-assets/*.iso
+            ./release-assets/*.sha256
+            ./release-assets/*-CHECKSUM
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+
+      - name: Clean up old releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Keep only the last 3 releases
+          gh release list --limit 100 --json tagName,createdAt | \
+            jq -r '.[3:] | .[].tagName' | \
+            xargs -I {} gh release delete {} --yes --cleanup-tag || true
+
+  notify-completion:
+    name: Notify Build Completion
+    if: always()
+    needs: [build-iso, create-release]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## 📊 Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.build-iso.result }}" == "success" ]]; then
+            echo "✅ **ISO Build:** Successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **ISO Build:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.create-release.result }}" == "success" ]]; then
+            echo "✅ **Release Creation:** Successful" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-iso.outputs.version_tag }})" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.create-release.result }}" == "skipped" ]]; then
+            echo "⏭️ **Release Creation:** Skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Release Creation:** Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered By:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Actor:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
