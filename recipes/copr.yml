@@ -8,7 +8,6 @@ install:
     - bibata-cursor-themes
     - cliphist
     - eza
-    - iwmenu
     - lisgd
     - nwg-clipman
     - nwg-look
