@@ -153,8 +153,10 @@ install:
     - python3-pywayland 
     - python3-ijson 
     - python3-setproctitle
-    # tailscale
+    # networking
+    - caddy
     - tailscale
+
 remove:
   packages:
     - sway
