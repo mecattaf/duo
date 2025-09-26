@@ -1,0 +1,15 @@
+name: fonts
+shortdesc: The `fonts` module can be used to install fonts from Nerd Fonts or Google Fonts.
+example: |
+  type: fonts
+  fonts:
+    nerd-fonts:
+      - FiraCode # don't add spaces or "Nerd Font" suffix.
+      - Hack
+      - SourceCodePro
+      - Terminus
+      - JetBrainsMono
+      - NerdFontsSymbolsOnly
+    google-fonts:
+      - Roboto
+      - Open Sans

@@ -1,3 +1,7 @@
+> [!CAUTION]
+> Deprecated: Use Firefox
+
+
 # Google Chrome Configuration
 
 ## 1. Chrome Settings (`chrome://settings`)

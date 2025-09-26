@@ -1,11 +1,11 @@
-# Zen Linux &nbsp; [![build-ublue](https://github.com/blue-build/template/actions/workflows/build.yml/badge.svg)](https://github.com/blue-build/template/actions/workflows/build.yml)
+# Duo Linux &nbsp; [![build-ublue](https://github.com/blue-build/template/actions/workflows/build.yml/badge.svg)](https://github.com/blue-build/template/actions/workflows/build.yml)
 
 See the [BlueBuild docs](https://blue-build.org/how-to/setup/). 
 
 ## Installation (ISO) [Recommended]
 
 > [!CAUTION]
-> This ISO installation guide assumes that you want to install Zen Linux on single-boot single-disk setup.
+> This ISO installation guide assumes that you want to install Duo Linux on single-boot single-disk setup.
 
 ### [DOWNLOAD LINK](https://github.com/mecattaf/duo/actions/workflows/build-iso.yml)
 Click on the most recent successful build, then download the ISO artifact.  
@@ -22,7 +22,7 @@ ISOs are named in DD-MM-YYYY date format for easy identification.
   - **Root Password**: Set a root password for system administration (recommended for Sway environments)
 - Optionally configure "Keyboard", "Language Support", "Time & Date", etc.
 - Click "Begin Installation"
-- After installation completes, reboot and enjoy your new Zen Linux system
+- After installation completes, reboot and enjoy your new Duo Linux system
 
 ### Manual Steps
 
@@ -32,7 +32,7 @@ ISOs are named in DD-MM-YYYY date format for easy identification.
 git config --global user.name "Thomas Mecattaf"
 git config --global user.email "thomas@mecattaf.dev"
 ```
-- Authenticate to google chrome and [follow instructions](docs/chrome.md)
+- Authenticate to firefox and [follow instructions](docs/firefox.md)
 - Authenticate to gh from the CLI
 - Set icon and gtk theme with GTK Settings
 - If flatpaks are not loaded automatically: ``
@@ -40,8 +40,59 @@ git config --global user.email "thomas@mecattaf.dev"
 mako #to have a notification daemon running
 bluebuild-flatpak-manager apply all
 ```
+- Authenticate into tailscale (using github account)
 
-## Installation (Rebase)
+### Enabling systemd services
+
+We use a single command to detect and enable all systemd services in one go. The snippets below show us testing for a subset of available podman quadlets to be used. Do the same for testing other systemd units (wayland graphical session)
+```
+
+# Reload systemd
+echo "Reloading systemd daemon..."
+systemctl --user daemon-reload
+
+# Start services in order
+echo "Starting core services..."
+systemctl --user start llm.network
+systemctl --user start llm-postgres
+systemctl --user start llm-redis
+
+echo "Waiting for databases to initialize..."
+sleep 10
+
+echo "Starting auxiliary services..."
+systemctl --user start docling
+systemctl --user start tika
+systemctl --user start searxng
+systemctl --user start mcp
+systemctl --user start edgetts
+
+echo "Starting main services..."
+systemctl --user start litellm
+systemctl --user start openwebui
+
+# Enable services
+echo "Enabling services for session startup..."
+systemctl --user enable \
+    llm-postgres \
+    llm-redis \
+    docling \
+    tika \
+    searxng \
+    mcp \
+    edgetts \
+    litellm \
+    openwebui
+
+# Status check
+echo ""
+echo "Service Status:"
+echo "==============="
+systemctl --user status --no-pager llm.slice
+
+```
+
+## Alternative Installation (Rebase)
 
 To rebase an existing atomic Fedora installation to the latest build:
 
@@ -95,4 +146,3 @@ For the Jan. 13th 2024 bazzite-deck (Fedora 39) build.
 ```shell
 sudo rpm-ostree rebase fedora:fedora/40/x86_64/silverblue
 ```
-
