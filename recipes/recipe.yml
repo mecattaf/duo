@@ -81,4 +81,8 @@ modules:
           # - org.freedesktop.Platform.VulkanLayer.OBSVkCapture
           # - org.freedesktop.Platform.GStreamer.gstreamer-vaapi
 
+  - type: justfiles
+    include:
+      - firefox-setup.just
+
   - type: signing
