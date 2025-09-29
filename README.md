@@ -32,7 +32,7 @@ ISOs are named in DD-MM-YYYY date format for easy identification.
 git config --global user.name "Thomas Mecattaf"
 git config --global user.email "thomas@mecattaf.dev"
 ```
-- Authenticate to firefox and [follow instructions](docs/firefox.md)
+- Authenticate to google chrome and [follow instructions](docs/chrome.md)
 - Authenticate to gh from the CLI
 - Set icon and gtk theme with GTK Settings
 - If flatpaks are not loaded automatically: ``
