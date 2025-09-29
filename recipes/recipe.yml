@@ -45,10 +45,6 @@ modules:
         - tailscaled.service
       disabled: []
 
-  - type: script
-    snippets:
-      - "sed -i 's/Inherits=Catppuccin-Noir-Standard-Green-Dark/Inherits=Catppuccin-SE/' /usr/share/icons/default/index.theme"
-
   - type: chezmoi
     repository: "https://github.com/mecattaf/dotfiles"
     run-every: '1d'
@@ -80,9 +76,5 @@ modules:
           - org.mozilla.firefox
           # - org.freedesktop.Platform.VulkanLayer.OBSVkCapture
           # - org.freedesktop.Platform.GStreamer.gstreamer-vaapi
-
-  - type: justfiles
-    include:
-      - firefox-setup.just
 
   - type: signing
