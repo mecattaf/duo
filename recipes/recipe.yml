@@ -19,6 +19,12 @@ modules:
         - toolbox
         - nvtop
 
+#  - type: kargs
+#    kargs:
+#      - amd_iommu=off
+#      - amdgpu.gttsize=131072
+#      - ttm.pages_limit=33554432
+
   - type: files
     files:
       - source: system
