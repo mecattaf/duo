@@ -53,9 +53,6 @@ modules:
         - sddm-boot.service
         - enable-linger.service
         - autologin.service
-      disabled: []
-    user:
-      enabled:
         - tailscaled.service
       disabled: []
 
