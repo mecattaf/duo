@@ -71,6 +71,7 @@ install:
     - wireplumber
     # System Core
     - acpi
+    - age
     - aria2
     - bolt
     - cmake
@@ -156,15 +157,3 @@ install:
     # networking
     - caddy
     - tailscale
-
-remove:
-  packages:
-    - sway
-
-replace:
-  - from-repo: updates-archive
-    packages:
-      - kernel-6.14.6
-      - kernel-modules-6.14.6
-      - kernel-modules-extra-6.14.6
-      - kernel-tools-6.14.6
