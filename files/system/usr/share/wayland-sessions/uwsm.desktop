@@ -1,6 +1,0 @@
-[Desktop Entry]
-Name=UWSM
-Comment=UWSM-managed session with robust podman quadlets autostarting
-Exec=uwsm start default
-Type=Application
-DesktopNames=uwsm

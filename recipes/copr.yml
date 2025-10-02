@@ -14,5 +14,4 @@ install:
     - nwg-look
     - scroll
     - starship
-    - uwsm
     - wl-gammarelay-rs
