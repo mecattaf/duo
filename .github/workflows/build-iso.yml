@@ -31,6 +31,9 @@ jobs:
       iso_name: ${{ steps.build.outputs.iso_name }}
       timestamp: ${{ steps.date.outputs.timestamp }}
       version_tag: ${{ steps.date.outputs.version_tag }}
+      iso_size: ${{ steps.check_size.outputs.iso_size }}
+      iso_size_mb: ${{ steps.check_size.outputs.iso_size_mb }}
+      exceeds_limit: ${{ steps.check_size.outputs.exceeds_limit }}
       
     steps:
       - name: Free Disk Space
@@ -75,6 +78,29 @@ jobs:
           enable_cache_skopeo: "false"
           enable_flatpak_dependencies: "false"
 
+      - name: Check ISO Size
+        id: check_size
+        run: |
+          ISO_FILE="${{ steps.build.outputs.iso_name }}"
+          
+          # Get file size in bytes
+          ISO_SIZE=$(stat -c%s "${ISO_FILE}")
+          ISO_SIZE_MB=$((ISO_SIZE / 1024 / 1024))
+          
+          # GitHub release asset limit is 2GB (2147483648 bytes)
+          GITHUB_LIMIT=2147483648
+          
+          echo "iso_size=${ISO_SIZE}" >> $GITHUB_OUTPUT
+          echo "iso_size_mb=${ISO_SIZE_MB}" >> $GITHUB_OUTPUT
+          
+          if [ ${ISO_SIZE} -gt ${GITHUB_LIMIT} ]; then
+            echo "exceeds_limit=true" >> $GITHUB_OUTPUT
+            echo "⚠️ ISO size (${ISO_SIZE_MB} MB) exceeds GitHub's 2GB release limit"
+          else
+            echo "exceeds_limit=false" >> $GITHUB_OUTPUT
+            echo "✅ ISO size (${ISO_SIZE_MB} MB) is within GitHub's 2GB release limit"
+          fi
+
       - name: Generate Additional Checksums
         id: checksums
         run: |
@@ -99,6 +125,7 @@ jobs:
           # Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           # Version: ${{ env.VERSION_TAG }}
           # Registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # Size: ${{ steps.check_size.outputs.iso_size_mb }} MB
           
           $(sha256sum "${ISO_FILE}")
           EOF
@@ -172,6 +199,8 @@ jobs:
         env:
           TIMESTAMP: ${{ needs.build-iso.outputs.timestamp }}
           VERSION_TAG: ${{ needs.build-iso.outputs.version_tag }}
+          ISO_SIZE_MB: ${{ needs.build-iso.outputs.iso_size_mb }}
+          EXCEEDS_LIMIT: ${{ needs.build-iso.outputs.exceeds_limit }}
         run: |
           # Create changelog file
           CHANGELOG_FILE="CHANGELOG-${TIMESTAMP}.md"
@@ -182,10 +211,34 @@ jobs:
           **Release Date:** $(date -u +"%Y-%m-%d")
           **Base Image:** Fedora Sericea 42
           **Container:** \`${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`
+          **ISO Size:** ${ISO_SIZE_MB} MB
           
           ## 📦 Downloads
           
-          - **ISO:** \`${{ env.IMAGE_NAME }}-${TIMESTAMP}.iso\`
+          EOF
+          
+          # Add download instructions based on whether ISO exceeds GitHub limit
+          if [ "${EXCEEDS_LIMIT}" = "true" ]; then
+            cat >> "${CHANGELOG_FILE}" << 'EOF'
+          > **Note:** The ISO file exceeds GitHub's 2GB release asset limit and is available as a workflow artifact.
+          
+          ### Download the ISO:
+          1. Go to the [Actions tab](../../actions/workflows/build-iso.yml)
+          2. Click on the most recent successful workflow run
+          3. Scroll down to the "Artifacts" section
+          4. Download `duo-iso-${TIMESTAMP}.zip`
+          5. Extract the ISO from the zip file
+          
+          **Direct artifact link:** [duo-iso-${TIMESTAMP}](../../actions/runs/${{ github.run_id }})
+          
+          EOF
+          else
+            cat >> "${CHANGELOG_FILE}" << EOF
+          - **ISO:** \`${{ env.IMAGE_NAME }}-${TIMESTAMP}.iso\` (available in release assets below)
+          EOF
+          fi
+          
+          cat >> "${CHANGELOG_FILE}" << EOF
           - **SHA256 Checksum:** Available in release assets
           
           ## 🚀 What's New
@@ -264,10 +317,25 @@ jobs:
           name: changelog-${{ needs.build-iso.outputs.timestamp }}
           path: ./
 
+      - name: Prepare Release Assets
+        id: prepare_assets
+        run: |
+          # If ISO exceeds GitHub limit, don't include it in release
+          if [ "${{ needs.build-iso.outputs.exceeds_limit }}" = "true" ]; then
+            echo "ISO exceeds 2GB limit, excluding from release assets"
+            # Keep only checksum files
+            mkdir -p ./release-assets-filtered
+            find ./release-assets -type f ! -name "*.iso" -exec cp {} ./release-assets-filtered/ \;
+            echo "assets_dir=./release-assets-filtered" >> $GITHUB_OUTPUT
+          else
+            echo "ISO within size limit, including in release"
+            echo "assets_dir=./release-assets" >> $GITHUB_OUTPUT
+          fi
+
       - name: List Release Assets
         run: |
           echo "Release assets:"
-          ls -lah ./release-assets/
+          ls -lah ${{ steps.prepare_assets.outputs.assets_dir }}/
           echo ""
           echo "Changelog:"
           ls -lah ./*.md
@@ -282,7 +350,7 @@ jobs:
           prerelease: false
           make_latest: true
           files: |
-            ./release-assets/*
+            ${{ steps.prepare_assets.outputs.assets_dir }}/*
           fail_on_unmatched_files: false
           generate_release_notes: false
 
@@ -314,6 +382,12 @@ jobs:
             echo "✅ **ISO Build:** Successful" >> $GITHUB_STEP_SUMMARY
             echo "- ISO Name: \`${{ needs.build-iso.outputs.iso_name }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- Version: \`${{ needs.build-iso.outputs.version_tag }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Size: ${{ needs.build-iso.outputs.iso_size_mb }} MB" >> $GITHUB_STEP_SUMMARY
+            
+            if [[ "${{ needs.build-iso.outputs.exceeds_limit }}" == "true" ]]; then
+              echo "- ⚠️ **Note:** ISO exceeds GitHub's 2GB release limit" >> $GITHUB_STEP_SUMMARY
+              echo "- 📦 **Download:** Available as workflow artifact" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "❌ **ISO Build:** Failed" >> $GITHUB_STEP_SUMMARY
           fi
