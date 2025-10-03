@@ -40,22 +40,7 @@ modules:
       - source: system
         destination: /
 
-  - type: fonts
-    fonts:
-      nerd-fonts:
-        - DejaVuSansMono
-        - FiraCode
-        - Hack
-        - JetBrainsMono
-        - SourceCodePro
-        - Iosevka
-        - NerdFontsSymbolsOnly
-      url-fonts:
-        - name: Apple-SF
-          url: https://github.com/mecattaf/San-Francisco-family/releases/download/v1.0/apple-sf-nerd-patched.zip
-        - name: SFMono-Nerd-Font-Ligaturized
-          url: https://github.com/mecattaf/San-Francisco-family/releases/download/v1.0/SFMono-Liga.zip
-
+  - from-file: fonts.yml
 
   - type: systemd
     system:
