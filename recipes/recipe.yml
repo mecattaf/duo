@@ -19,6 +19,12 @@ modules:
         - toolbox
         - nvtop
         - sway
+        - yggdrasil
+        - adcli 
+        - libdnf-plugin-subscription-manager 
+        - python3-subscription-manager-rhsm 
+        - subscription-manager 
+        - subscription-manager-rhsm-certificates 
 
   - type: dnf
     replace:

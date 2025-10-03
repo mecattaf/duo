@@ -148,6 +148,7 @@ install:
     - python3-numpy 
     - python3-pillow 
     - python3-psutil 
+    - python3-ramalama
     - python3-requests 
     - python3-toml 
     - python3-watchdog 
@@ -157,3 +158,10 @@ install:
     # networking
     - caddy
     - tailscale
+    - cockpit
+    - cockpit-machines
+    - cockpit-networkmanager
+    - cockpit-podman
+    - cockpit-selinux
+    - cockpit-storaged
+    - cockpit-system
